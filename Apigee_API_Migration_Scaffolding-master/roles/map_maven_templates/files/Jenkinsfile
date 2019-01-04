@@ -1,0 +1,158 @@
+node {
+	// Clean workspace before doing anything
+    deleteDir() 
+
+    try {
+			
+		stage ('Clone') {
+			echo 'Cloning....'
+			checkout scm
+		}
+		stage('Initialize') {
+            echo 'Initializing...'
+            def mvnHome = tool 'Maven 3.5.4'
+            def node = tool 'node-v9.11.1'
+            env.PATH = "${mvnHome}/bin:${env.PATH}"
+            env.PATH = "${node}:${env.PATH}"
+        }
+
+                
+        stage ('Build') {
+    	    echo 'Building...'
+    		script {
+        		switch("${env.BRANCH_NAME}") {
+        			case "master":
+        		        EdgeProfile="api-int-dev"
+        		        EdgeSuffix=""
+        		        EdgeName=""
+        				break;
+					case "eval-test":
+        			    EdgeProfile="eval01-test"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;  
+        			case "eval-dev":
+        			    EdgeProfile="eval01-dev"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;   
+					case "int-dev1":
+        			    EdgeProfile="api-int-dev1"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;        
+        			case "int-dev2":
+        			    EdgeProfile="api-int-dev2"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;        
+        			case "int-dev3":
+        			    EdgeProfile="api-int-dev3"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;     
+        			case "int-dev4":
+        			    EdgeProfile="api-int-dev4"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;
+        			case "int-test1":
+        			    EdgeProfile="api-int-test1"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;        
+        			case "int-test2":
+        			    EdgeProfile="api-int-test2"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;        
+        			case "int-test3":
+        			    EdgeProfile="api-int-test3"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;     
+        			case "int-test4":
+        			    EdgeProfile="api-int-test4"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;
+                    case "ext-test1":
+        			    EdgeProfile="api-ext-test1"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;        
+        			case "ext-test2":
+        			    EdgeProfile="api-ext-test2"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;        
+        			case "ext-test3":
+        			    EdgeProfile="api-ext-test3"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;     
+        			case "ext-test4":
+        			    EdgeProfile="api-ext-test4"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;
+					case "int-prod":
+        			    EdgeProfile="api-int-prod"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;
+					case "ext-prod":
+        			    EdgeProfile="api-ext-prod"
+        			    EdgeSuffix=""
+        			    EdgeName=""
+        				break;
+        			default:
+        			    EdgeProfile="api-int-dev"
+        			    EdgeSuffix="${env.BRANCH_NAME}"
+        			    EdgeName="-${env.BRANCH_NAME}"
+        				break;
+        	    }
+    	    }
+    			withCredentials(
+                    [
+                      [$class: 'UsernamePasswordMultiBinding',
+                       credentialsId: 'APICICDMachineUser',
+                       passwordVariable: 'APIGEE_PASSWORD',
+                       usernameVariable: 'APIGEE_USERNAME']
+                    ]
+                )	{
+            sh "mvn -P${EdgeProfile} clean install -Ddeployment.suffix=${EdgeSuffix} -Ddeployment.name=${EdgeName} -Dapigee.config.options=update -Dapigee.config.exportDir=target/test/integration -Dapi.testtag=@health,@errorHandling -Dapigee.username=${APIGEE_USERNAME} -Dapigee.password=${APIGEE_PASSWORD} -X"
+	    }}
+	    stage('Coverage Test Report') {
+
+            publishHTML(target: [
+                                  allowMissing: false,
+                                  alwaysLinkToLastBuild: false,
+                                  keepAll: false,
+                                  reportDir: "target/",
+                                  reportFiles: 'index.html',
+                                  reportName: 'HTML Report'
+                                ]
+                        )
+        }
+        stage('Functional Test Report') {
+                step([
+                    $class: 'CucumberReportPublisher',
+                    fileExcludePattern: '',
+                    fileIncludePattern: "**/reports.json",
+                    ignoreFailedTests: false,
+                    jenkinsBasePath: '',
+                    jsonReportDirectory: "target",
+                    missingFails: false,
+                    parallelTesting: false,
+                    pendingFails: false,
+                    skippedFails: false,
+                    undefinedFails: false
+                    ])
+        }
+    } catch (err) {
+        currentBuild.result = 'FAILED'
+        throw err
+    }
+	
+}

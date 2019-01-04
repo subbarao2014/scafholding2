@@ -1,0 +1,35 @@
+node {
+    // Clean workspace before doing anything
+    deleteDir() 
+
+    try {
+    
+        stage ('Clone') {
+			echo 'Cloning...'
+			checkout scm
+		}
+                
+        stage ('Build') {
+    	    echo 'Building...'
+    			withCredentials(
+                    [
+                      usernamePassword(
+                       credentialsId: 'APICICD',
+                       passwordVariable: 'CICD_PASSWORD',
+                       usernameVariable: 'CICD_USERNAME')
+                    ]
+                )	{
+            echo "api_options ${api_options}"
+            sh "ansible-playbook -e 'api_name=${api_name} base_path=${base_path} target_server=${target_server} target_server_host=${target_server_host} target_server_base_path=${target_server_base_path} target_server_port=${target_server_port} target_server_protocol=${target_server_protocol} auth_groups=\"${auth_groups}\" auth_users=${auth_users} cicd_creds_id=APICICD cicd_username=${CICD_USERNAME} cicd_password=${CICD_PASSWORD}' ansible-apigee-migration-pattern.yml --tags ${api_options} -vvvv" 
+	    }
+	    
+	    }
+        
+
+} catch (err) {
+        currentBuild.result = 'FAILED'
+        throw err
+    }
+
+
+}

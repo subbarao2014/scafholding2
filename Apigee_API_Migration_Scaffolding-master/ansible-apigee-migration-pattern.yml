@@ -1,0 +1,7 @@
+---
+ - hosts: localhost
+   roles:
+    - sec_patterns
+    - map_maven_templates
+    - git_push
+    - jenkins_jobs

@@ -1,0 +1,24 @@
+edge_config:
+  version: '1.0'
+  envConfig:
+    dev:
+      targetServers:
+      - name: "{{ target_server }}"
+        host: "{{ target_server_host }}"
+        isEnabled: true
+        port: "{{ target_server_port }}"
+      kvms:
+      - entry:
+        - name: "{{ api_name }}"
+          value: "{{ auth_groups }}"
+        name: kvm-authorized-groups
+      - entry:
+        - name: "{{ api_name }}"
+          value: "{{ auth_users }}"
+        name: kvm-authorized-users
+      - entry:
+        - name: "{{ api_name }}"
+          value: "https://{{ target_server_host }}{{ target_server_base_path }}"
+        name: kvm-jwt-subject
+  orgConfig:
+  apiConfig:

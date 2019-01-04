@@ -1,0 +1,40 @@
+- name: Obtain GitLab OAuth Token
+  uri:
+    url: https://{{ gitlab_server_hostname }}/oauth/token
+    method: POST
+    body: "{{  gitlab_credentials }}"
+    body_format: json
+    validate_certs: no
+    headers:
+      Content-Type: "application/json"
+  register: OAUTHTOKEN
+  tags: always
+- name: Create GitLab Project
+  uri:
+    url: "https://{{ gitlab_server_hostname }}/api/v4/projects"
+    method: POST
+    body: "{{ gitlab_project }}"
+    body_format: json
+    validate_certs: no
+    headers:
+      Authorization: "Bearer {{ OAUTHTOKEN.json.access_token }}"
+    status_code: 201
+  tags: always
+- pause:
+    seconds: 15
+  tags: always
+- name: Initilizing repositories
+  shell: cd ./{{ api_name }} && git init
+  tags: always
+- name: Add repositories
+  shell: cd ./{{ api_name }} && git add .
+  tags: always
+- name: Initial commit
+  shell: cd ./{{ api_name }} && git commit -m "First commit."
+  tags: always
+- name: Set remote bramch
+  shell: cd ./{{ api_name }} && git remote add origin https://{{ cicd_username }}:{{ cicd_password }}@{{ gitlab_server_hostname }}/APIGEE_DEV/{{ api_name }}.git
+  tags: always
+- name: Push Proxy to repository
+  shell: cd ./{{ api_name }} && git push -u origin master
+  tags: always

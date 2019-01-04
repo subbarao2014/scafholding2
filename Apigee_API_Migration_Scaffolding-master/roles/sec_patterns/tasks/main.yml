@@ -1,0 +1,133 @@
+- name: Creates api directory
+  file: path=./{{ api_name }} state=directory
+  tags: always
+- name: Creates apiproxy directory
+  file: path=./{{ api_name }}/apiproxy state=directory
+  tags: always
+- name: Creates apiproxy directory
+  file: path=./{{ api_name }}/apiproxy/proxies state=directory
+  tags: always
+- name: Creates apiproxy directory
+  file: path=./{{ api_name }}/apiproxy/policies state=directory
+  tags: always
+- name: Creates apiproxy directory
+  file: path=./{{ api_name }}/apiproxy/targets state=directory
+  tags: always
+- template:
+    src: apiproxy/APIProxy.xml.j2
+    dest: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+  tags: always
+- template:
+    src: apiproxy/proxies/default.xml.j2
+    dest: ./{{ api_name }}/apiproxy/proxies/default.xml
+  tags: always
+- template:
+    src: apiproxy/targets/default.xml.j2
+    dest: ./{{ api_name }}/apiproxy/targets/default.xml
+  tags: always
+- template:
+    src: VAK-Verify-API-Key.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/VAK-Verify-API-Key.xml
+  tags: always
+- template:
+    src: AM-Add-CORS.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/AM-Add-CORS.xml
+  tags: CORS
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Response
+    add_children:
+    - Step:
+  tags: CORS
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Response/Step[1]/Name
+    value: "AM-Add-CORS"
+  tags: CORS
+- set_fact:
+    sec_pattern: Legacy-Basic-Auth
+  tags: always
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: always
+- set_fact:
+    sec_pattern: Target-Basic-Auth
+  tags: always
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: always
+- set_fact:
+    sec_pattern: Generate-JWT
+  tags: JWT
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: JWT
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "FC-SF-SecUtils-Generate-JWT"
+  tags: JWT
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: JWT
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Request/Step[2]/Name
+    value: "FC-SF-SecUtils-Generate-JWT"
+  tags: JWT
+- set_fact:
+    sec_pattern: Splunk-Logging
+  tags: always
+- copy:
+    content: "{{ edge_config | to_nice_json }}"
+    dest: ./{{ api_name }}/edge.json
+  tags: always
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: always
+- set_fact:
+    tm_name: By-Client-IP
+  tags: always
+- set_fact:
+    sp_indentifier: client.ip
+  tags: always
+- set_fact:
+    sp_rate: 15ps
+  tags: always
+- template:
+    src: TM-SA-Set-Rate-Limiter.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TM-SA-{{ tm_name }}.xml
+  tags: always
+- set_fact:
+    tm_name: By-Username
+  tags: always
+- set_fact:
+    sp_indentifier: flow.api.sec.username
+  tags: always
+- set_fact:
+    sp_rate: 15ps
+  tags: always
+- template:
+    src: TM-SA-Set-Rate-Limiter.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TM-SA-{{ tm_name }}.xml
+  tags: always
+- template:
+    src: TP-Json-Payload.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TP-Json-Payload.xml
+  tags: always
+- template:
+    src: TP-XML-Payload.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TP-XML-Payload.xml
+  tags: always

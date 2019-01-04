@@ -1,0 +1,9 @@
+gitlab_server_hostname: "NE1ITCPRHAS62.ne1.savvis.net"
+gitlab_credentials:
+ username: "{{ cicd_username }}"
+ password: "{{ cicd_password }}"
+ grant_type: "password"
+gitlab_project:
+ name: "{{ api_name}}"
+ visibility: "private"
+ namespace_id: "2222"

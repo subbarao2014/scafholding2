@@ -1,0 +1,27 @@
+- name: Obtain Jenkins Crumb
+  uri:
+    url: "https://{{ jenkins_server_hostname }}/crumbIssuer/api/json"
+    method: GET
+    user: "{{ cicd_username }}"
+    password: "{{ cicd_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+  register: CRUMB
+  tags: always 
+- template:
+    src: config.xml.j2
+    dest: ./configJenkinsProject.xml
+  tags: always
+- name: Create Jenkins Project
+  uri:
+    url: "https://{{ jenkins_server_hostname }}/createItem?name=HYPERION_API_{{ api_name }}"
+    method: POST
+    user: "{{ cicd_username }}"
+    password: "{{ cicd_password }}"
+    force_basic_auth: yes
+    validate_certs: no
+    body: "{{ lookup('file','configJenkinsProject.xml') }}"
+    headers:
+      Content-Type: "text/xml"
+      Jenkins-Crumb: "{{ CRUMB.json.crumb }}"
+  tags: always
