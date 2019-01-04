@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<XMLThreatProtection async="false" continueOnError="false" enabled="true" name="TP-XML-Payload">
+    <DisplayName>TP-XML-Payload</DisplayName>
+    <Properties/>
+    <NameLimits>
+        <Element>100</Element>
+        <Attribute>100</Attribute>
+        <NamespacePrefix>100</NamespacePrefix>
+        <ProcessingInstructionTarget>100</ProcessingInstructionTarget>
+    </NameLimits>
+    <Source>request</Source>
+    <StructureLimits>
+        <NodeDepth>5</NodeDepth>
+        <AttributeCountPerElement>100</AttributeCountPerElement>
+        <NamespaceCountPerElement>100</NamespaceCountPerElement>
+        <ChildCount includeComment="true" includeElement="true" includeProcessingInstruction="true" includeText="true">100</ChildCount>
+    </StructureLimits>
+    <ValueLimits>
+        <Text>1000</Text>
+        <Attribute>100</Attribute>
+        <NamespaceURI>100</NamespaceURI>
+        <Comment>10</Comment>
+        <ProcessingInstructionData>10</ProcessingInstructionData>
+    </ValueLimits>
+</XMLThreatProtection>

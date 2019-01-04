@@ -1,0 +1,16 @@
+edge_config:
+  version: '1.0'
+  envConfig:
+    dev:
+      targetServers:
+      - name: "{{ target_server_name }}"
+        host: "{{ target_server_host }}"
+        isEnabled: true
+        port: "{{ target_server_port }}"
+      kvms:
+      - entry:
+        - name: "{{ api_name }}"
+          value: "https://{{ target_server_host }}"
+        name: kvm-jwt-subject
+  orgConfig:
+  apiConfig:

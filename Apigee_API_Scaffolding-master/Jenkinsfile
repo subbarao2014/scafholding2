@@ -1,0 +1,64 @@
+node {
+    // Clean workspace before doing anything
+    deleteDir() 
+
+    //def api_name = (swaggerspec_yaml=~"(.+).yaml")[0][1] 
+
+    try {
+    
+        stage ('Clone') {
+			echo 'Cloning...'
+			checkout scm
+		}
+			
+		stage('Initialize') {
+            echo 'Initializing...'
+            def node = tool 'node-v9.11.1'
+            env.PATH = "${node}:${env.PATH}"
+            def base_workspace = pwd()
+            withCredentials(
+                    [
+                      usernamePassword(
+                       credentialsId: 'APICICD',
+                       passwordVariable: 'CICD_PASSWORD',
+                       usernameVariable: 'CICD_USERNAME')
+                    ]
+                )	{
+                    def workspace = pwd()
+                    sh "npm init --yes"
+                    sh "npm i openapi2apigee@latest"
+                    env.PATH = "${workspace}/node_modules/.bin:${env.PATH}"
+                }
+
+        }
+        
+        stage('Write String Param to File') {
+        
+            writeFile file: "${workspace}/${api_name}swagger", text: "${swaggerspec_yaml}"
+    
+        }
+                
+        stage ('Build') {
+    	    echo 'Building...'
+    			withCredentials(
+                    [
+                      usernamePassword(
+                       credentialsId: 'APICICD',
+                       passwordVariable: 'CICD_PASSWORD',
+                       usernameVariable: 'CICD_USERNAME')
+                    ]
+                )	{
+
+            sh "ansible-playbook -e 'api_name=${api_name} swaggerspec=${workspace}/${api_name}swagger auth_pattern=${sec_pattern} cicd_creds_id=APICICD cicd_username=${CICD_USERNAME} cicd_password=${CICD_PASSWORD}' ansible-apigee-patterns-ctl.yml --tags ${api_options} -vvvv"
+	    }
+	    
+	    }
+        
+
+} catch (err) {
+        currentBuild.result = 'FAILED'
+        throw err
+    }
+
+
+}

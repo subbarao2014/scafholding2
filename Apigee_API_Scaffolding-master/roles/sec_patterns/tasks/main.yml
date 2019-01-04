@@ -1,0 +1,208 @@
+- set_fact:
+    tm_name: By-Client-IP
+  tags: always
+- set_fact:
+    sp_indentifier: client.ip
+  tags: always
+- set_fact:
+    sp_rate: 15ps
+  tags: always
+- template:
+    src: TM-SA-Set-Rate-Limiter.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TM-SA-{{ tm_name }}.xml
+  tags: always
+- name: Add Client IP Rate Limiter as Policy
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "TM-SA-{{ tm_name }}"
+  tags: always
+- name: Add Step element for Client IP Rate Limiter
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: always
+- name: Add Client IP Rate Limiter to Proxy preflow request
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request/Step[1]/Name
+    value: "TM-SA-{{ tm_name }}"
+  tags: always
+- set_fact:
+    sec_pattern: "{{ auth_pattern }}"
+  tags: always
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: always
+- name: Add Authentication Pattern as Policy
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "FC-SF-SecUtils-{{ sec_pattern }}"
+  tags: always
+- name: Add Step element for Authentication Pattern
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: always
+- name: Add Authentication Pattern to Proxy preflow request
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request/Step[2]/Name
+    value: "FC-SF-SecUtils-{{ sec_pattern }}"
+  tags: always  
+- template:
+    src: TP-Json-Payload.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TP-Json-Payload.xml
+  tags: always
+- name: Add TP-Json-Payload as Policy
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "TP-Json-Payload"
+  tags: always
+- name: Add Step element for TP-Json-Payload
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: always
+- name: Add TP-Json-Payload to Proxy preflow request
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request/Step[3]
+    add_children:
+    - Name: "TP-Json-Payload"
+    - Condition: (request.header.Content-Type Like "*json*")
+  tags: always
+- template:
+    src: TP-XML-Payload.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TP-XML-Payload.xml
+  tags: always
+- name: Add TP-Json-Payload as Policy
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "TP-XML-Payload"
+  tags: always
+- name: Add Step element for TP-XML-Payload
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: always
+- name: Add TP-XML-Payload to Proxy preflow request
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/PreFlow/Request/Step[4]
+    add_children:
+    - Name: "TP-XML-Payload"
+    - Condition: (request.header.Content-Type Like "*xml*")
+  tags: always
+- set_fact:
+    sec_pattern: Target-Basic-Auth
+  tags: always
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-Target-Basic-Auth.xml
+  tags: always
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "FC-SF-SecUtils-{{ sec_pattern }}"
+  tags: always
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: always
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Request/Step[1]/Name
+    value: "FC-SF-SecUtils-{{ sec_pattern }}"
+  tags: always  
+- set_fact:
+    sec_pattern: Generate-JWT
+  tags: JWT
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: JWT
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/{{ api_name }}.xml
+    xpath: /APIProxy/Policies/Policy
+    value: "FC-SF-SecUtils-{{ sec_pattern }}"
+  tags: JWT
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Request
+    add_children:
+    - Step:
+  tags: JWT
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PreFlow/Request/Step[2]/Name
+    value: "FC-SF-SecUtils-{{ sec_pattern }}"
+  tags: JWT
+- set_fact:
+    sec_pattern: Splunk-Logging
+  tags: always
+- template:
+    src: FC-SF-SecUtils.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/FC-SF-SecUtils-{{ sec_pattern }}.xml
+  tags: always
+- name: Add DefaultFaultRule element
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/DefaultFaultRule
+    attribute: name
+    value: fault-rule
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/DefaultFaultRule/Step
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/proxies/default.xml
+    xpath: /ProxyEndpoint/DefaultFaultRule/Step/Name
+    value: "FC-SF-SecUtils-Splunk-Logging"
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PostFlow/Response
+    add_children:
+    - Step:
+  tags: always
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/PostFlow/Response/Step[1]/Name
+    value: "FC-SF-SecUtils-Splunk-Logging"
+  tags: always  
+- set_fact:
+    tm_name: By-Username
+  tags: always
+- set_fact:
+    sp_indentifier: flow.api.sec.username
+  tags: always
+- set_fact:
+    sp_rate: 15ps
+  tags: always
+- template:
+    src: TM-SA-Set-Rate-Limiter.xml.j2
+    dest: ./{{ api_name }}/apiproxy/policies/TM-SA-{{ tm_name }}.xml
+  tags: always

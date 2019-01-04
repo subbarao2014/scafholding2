@@ -1,0 +1,26 @@
+- vars:
+    swagger_file: "{{ lookup('file', swaggerspec) }}"
+- name: Get host value
+  set_fact:
+    target_server_host: "https://{{ swagger_file.host }}"
+- name: Get basePath value
+  set_fact:
+    target_server_base_path: "{{ swagger_file.basePath }}"
+- name: Set Port
+  set_fact:
+    target_server_port: 443
+- copy:
+    content: "{{ edge_config | to_nice_json }}"
+    dest: ./{{ api_name }}/edge.json
+  tags: always
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/HTTPTargetConnection/LoadBalancer/Server
+    attribute: name
+    value: "{{ api_name }}"
+- name: Add or modify an attribute, add element if needed
+  xml:
+    path: ./{{ api_name }}/apiproxy/targets/default.xml
+    xpath: /TargetEndpoint/HTTPTargetConnection/URL
+    state: absent
